@@ -4,6 +4,8 @@ import {
   GitHubUserProfile,
   GitHubRepo,
   ProfileInsights,
+  LanguageEntry,
+  TopRepository,
   CustomError,
 } from "../types/github";
 
@@ -24,11 +26,6 @@ if (process.env.GITHUB_TOKEN) {
     `token ${process.env.GITHUB_TOKEN}`;
 }
 
-/**
- * Fetch basic user profile details from GitHub API
- * @param username
- * @returns User details
- */
 async function fetchUserProfile(username: string): Promise<GitHubUserProfile> {
   try {
     const response = await githubClient.get<GitHubUserProfile>(
@@ -40,11 +37,6 @@ async function fetchUserProfile(username: string): Promise<GitHubUserProfile> {
   }
 }
 
-/**
- * Fetch all repositories of a user, resolving pagination
- * @param username
- * @returns List of repositories
- */
 async function fetchUserRepos(username: string): Promise<GitHubRepo[]> {
   const repos: GitHubRepo[] = [];
   let page = 1;
@@ -55,16 +47,11 @@ async function fetchUserRepos(username: string): Promise<GitHubRepo[]> {
       const response = await githubClient.get<GitHubRepo[]>(
         `/users/${username}/repos`,
         {
-          params: {
-            per_page: 100,
-            page: page,
-          },
+          params: { per_page: 100, page },
         },
       );
-
       const data = response.data;
       repos.push(...data);
-
       if (data.length < 100) {
         hasMore = false;
       } else {
@@ -77,21 +64,15 @@ async function fetchUserRepos(username: string): Promise<GitHubRepo[]> {
   }
 }
 
-/**
- * Analyze user profile and repositories to calculate insights
- * @param username
- * @returns Aggregated profile insights
- */
 export async function analyzeProfile(
   username: string,
 ): Promise<ProfileInsights> {
-  // Fetch user profile and repos in parallel
   const [profileData, repos] = await Promise.all([
     fetchUserProfile(username),
     fetchUserRepos(username),
   ]);
 
-  // Insights calculation variables
+  // ── Aggregation accumulators ─────────────────────────────────────────────
   let totalStars = 0;
   let totalForks = 0;
   let totalWatchers = 0;
@@ -99,6 +80,7 @@ export async function analyzeProfile(
   let mostStarredRepo: string | null = null;
   let mostStarredRepoStars = 0;
   let latestRepoUpdatedAt: Date | null = null;
+  const languageCounts: Record<string, number> = {};
 
   if (repos && repos.length > 0) {
     repos.forEach((repo: GitHubRepo) => {
@@ -107,18 +89,21 @@ export async function analyzeProfile(
       totalWatchers += repo.watchers_count || 0;
       totalRepoSize += repo.size || 0;
 
-      // Track most starred repository
       if (repo.stargazers_count >= mostStarredRepoStars) {
         mostStarredRepoStars = repo.stargazers_count;
         mostStarredRepo = repo.name;
       }
 
-      // Track latest updated repository
       if (repo.updated_at) {
-        const repoUpdateDate = new Date(repo.updated_at);
-        if (!latestRepoUpdatedAt || repoUpdateDate > latestRepoUpdatedAt) {
-          latestRepoUpdatedAt = repoUpdateDate;
+        const d = new Date(repo.updated_at);
+        if (!latestRepoUpdatedAt || d > latestRepoUpdatedAt) {
+          latestRepoUpdatedAt = d;
         }
+      }
+
+      if (repo.language) {
+        languageCounts[repo.language] =
+          (languageCounts[repo.language] || 0) + 1;
       }
     });
   }
@@ -128,16 +113,81 @@ export async function analyzeProfile(
     publicReposCount > 0 ? totalStars / publicReposCount : 0;
   const averageForksPerRepo =
     publicReposCount > 0 ? totalForks / publicReposCount : 0;
+  const forkToStarRatio =
+    totalStars > 0 ? parseFloat((totalForks / totalStars).toFixed(2)) : 0;
 
-  // Format date strings to MySQL compatible YYYY-MM-DD HH:mm:ss format
-  const formatMySQLDate = (
-    isoStringOrDate: string | Date | null,
-  ): string | null => {
-    if (!isoStringOrDate) return null;
-    return new Date(isoStringOrDate)
-      .toISOString()
-      .slice(0, 19)
-      .replace("T", " ");
+  // ── Account age in years ─────────────────────────────────────────────────
+  const accountCreatedDate = new Date(profileData.created_at);
+  const nowDate = new Date();
+  const accountAgeYears = parseFloat(
+    (
+      (nowDate.getTime() - accountCreatedDate.getTime()) /
+      (1000 * 60 * 60 * 24 * 365.25)
+    ).toFixed(1),
+  );
+
+  // ── Language distribution ────────────────────────────────────────────────
+  const totalLangRepos = Object.values(languageCounts).reduce(
+    (s, c) => s + c,
+    0,
+  );
+  const languages: LanguageEntry[] = Object.entries(languageCounts)
+    .map(([language, repo_count]) => ({
+      language,
+      repo_count,
+      percentage: parseFloat(((repo_count / totalLangRepos) * 100).toFixed(2)),
+    }))
+    .sort((a, b) => b.percentage - a.percentage);
+
+  // ── Top 5 repositories by star count ────────────────────────────────────
+  const top_repos: TopRepository[] = [...repos]
+    .sort((a, b) => b.stargazers_count - a.stargazers_count)
+    .slice(0, 5)
+    .map((repo) => ({
+      repo_name: repo.name,
+      description: repo.description || null,
+      url: repo.html_url,
+      language: repo.language || null,
+      stars: repo.stargazers_count,
+      forks: repo.forks_count,
+      watchers: repo.watchers_count,
+      is_fork: repo.fork,
+    }));
+
+  // ── Developer Score ────────────────────────────────
+
+  const developerScore = parseFloat(
+    (
+      profileData.followers * 2 +
+      totalStars * 1.5 +
+      totalForks * 1 +
+      publicReposCount * 0.5
+    ).toFixed(2),
+  );
+
+  // ── Profile Completeness % ───────────────────────────────────────────────
+
+  const completenessFields = [
+    profileData.name,
+    profileData.bio,
+    profileData.company,
+    profileData.location,
+    profileData.blog,
+    profileData.email ?? null,
+    profileData.twitter_username ?? null,
+    profileData.avatar_url ?? null,
+  ];
+  const filledFields = completenessFields.filter(
+    (f) => f !== null && f !== undefined && String(f).trim() !== "",
+  ).length;
+  const profileCompleteness = Math.round(
+    (filledFields / completenessFields.length) * 100,
+  );
+
+  // ── Date formatter ───────────────────────────────────────────────────────
+  const formatMySQLDate = (d: string | Date | null): string | null => {
+    if (!d) return null;
+    return new Date(d).toISOString().slice(0, 19).replace("T", " ");
   };
 
   return {
@@ -153,6 +203,7 @@ export async function analyzeProfile(
     public_repos: publicReposCount,
     public_gists: profileData.public_gists || 0,
     account_created_at: formatMySQLDate(profileData.created_at),
+    account_age_years: accountAgeYears,
     total_stars_received: totalStars,
     total_forks: totalForks,
     total_watchers: totalWatchers,
@@ -160,15 +211,17 @@ export async function analyzeProfile(
     most_starred_repo_stars: mostStarredRepoStars,
     average_stars_per_repo: parseFloat(averageStarsPerRepo.toFixed(2)),
     average_forks_per_repo: parseFloat(averageForksPerRepo.toFixed(2)),
+    fork_to_star_ratio: forkToStarRatio,
     total_repo_size: totalRepoSize,
     latest_repo_updated_at: formatMySQLDate(latestRepoUpdatedAt),
+    developer_score: developerScore,
+    profile_completeness: profileCompleteness,
     analysis_date: formatMySQLDate(new Date()),
+    languages,
+    top_repos,
   };
 }
 
-/**
- * Handle axios and GitHub API error scenarios
- */
 function handleGitHubError(error: any, username: string): never {
   if (error.response) {
     const status = error.response.status;

@@ -8,6 +8,7 @@ import profileRoutes from './routes/profileRoutes';
 import errorHandler from './middleware/errorHandler';
 import swaggerDocument from './config/swagger';
 import { CustomError } from './types/github';
+import { getPlatformStats, healthCheck } from './controllers/profileController';
 
 const app = express();
 
@@ -39,24 +40,29 @@ app.use('/api/', limiter);
 // API Documentation Dashboard
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-// Health Check / Landing Route
+// Root landing route
 app.get('/', (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: 'GitHub Profile Analyzer API is running.',
     documentation: '/api-docs',
     endpoints: {
-      analyze: 'POST /api/profiles/analyze',
-      getAll: 'GET /api/profiles',
-      getSingle: 'GET /api/profiles/:username',
-      reanalyze: 'PUT /api/profiles/:username/reanalyze',
-      delete: 'DELETE /api/profiles/:username'
+      health:     'GET  /api/health',
+      stats:      'GET  /api/stats',
+      analyze:    'POST /api/profiles/analyze',
+      getAll:     'GET  /api/profiles',
+      leaderboard:'GET  /api/profiles/leaderboard',
+      getSingle:  'GET  /api/profiles/:username',
+      reanalyze:  'PUT  /api/profiles/:username/reanalyze',
+      delete:     'DELETE /api/profiles/:username',
     }
   });
 });
 
 // API Routes
 app.use('/api/profiles', profileRoutes);
+app.get('/api/stats', getPlatformStats);
+app.get('/api/health', healthCheck);
 
 // Catch-all route for unhandled resources
 app.use((req: Request, _res: Response, next: NextFunction) => {
