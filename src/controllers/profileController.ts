@@ -169,7 +169,7 @@ export async function getAllProfiles(req: Request, res: Response, next: NextFunc
  */
 export async function getProfileByUsername(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    const { username } = req.params;
+    const username = req.params.username as string;
 
     const [rows] = await pool.query<RowDataPacket[]>(
       'SELECT * FROM github_profiles WHERE username = ?',
@@ -197,7 +197,7 @@ export async function getProfileByUsername(req: Request, res: Response, next: Ne
  */
 export async function reanalyzeProfile(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    const { username } = req.params;
+    const username = req.params.username as string;
 
     // Check if the profile exists in db first
     const [existing] = await pool.query<RowDataPacket[]>(
@@ -270,7 +270,7 @@ export async function reanalyzeProfile(req: Request, res: Response, next: NextFu
  */
 export async function deleteProfile(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    const { username } = req.params;
+    const username = req.params.username as string;
 
     const [existing] = await pool.query<RowDataPacket[]>(
       'SELECT id FROM github_profiles WHERE username = ?',

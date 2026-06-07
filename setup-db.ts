@@ -30,17 +30,17 @@ async function setupDatabase() {
     console.log('📖 Reading schema.sql...');
     const schemaSql = fs.readFileSync(schemaPath, 'utf8');
 
+    // Clean comments before splitting
+    const cleanedSql = schemaSql
+      .replace(/\/\*[\s\S]*?\*\//g, '') // remove multi-line comments
+      .replace(/--.*$/gm, '')           // remove double-dash comments
+      .replace(/#.*$/gm, '');           // remove hash comments
+
     // Split SQL file contents by semicolon to run statements sequentially
-    // Filter out empty statements and SQL comments
-    const statements = schemaSql
+    const statements = cleanedSql
       .split(';')
       .map(statement => statement.trim())
-      .filter(statement => {
-        if (!statement) return false;
-        // Ignore single-line comments
-        if (statement.startsWith('--') || statement.startsWith('#')) return false;
-        return true;
-      });
+      .filter(statement => statement.length > 0);
 
     console.log(`🚀 Executing ${statements.length} SQL statements...`);
     for (const statement of statements) {

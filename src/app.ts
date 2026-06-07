@@ -40,7 +40,7 @@ app.use('/api/', limiter);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Health Check / Landing Route
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: 'GitHub Profile Analyzer API is running.',
@@ -59,7 +59,7 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/api/profiles', profileRoutes);
 
 // Catch-all route for unhandled resources
-app.use((req: Request, res: Response, next: NextFunction) => {
+app.use((req: Request, _res: Response, next: NextFunction) => {
   const err: CustomError = new Error(`Resource '${req.method} ${req.url}' not found`);
   err.statusCode = 404;
   next(err);
