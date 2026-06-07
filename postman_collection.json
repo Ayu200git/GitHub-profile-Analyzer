@@ -2,12 +2,40 @@
   "info": {
     "_postman_id": "f5127b40-9a2c-4977-90cb-229ef5e0e0a5",
     "name": "GitHub Profile Analyzer API",
-    "description": "Postman Collection for testing the GitHub Profile Analyzer REST API endpoints.",
+    "description": "Complete Postman Collection for testing all GitHub Profile Analyzer REST API endpoints. Includes profile analysis, insights, leaderboard, platform stats, and health check.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Analyze Profile",
+      "name": "🩺 Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "health"]
+        },
+        "description": "Returns API health status, database connectivity, latency, uptime, and version info."
+      },
+      "response": []
+    },
+    {
+      "name": "📊 Platform Statistics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/stats",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "stats"]
+        },
+        "description": "Returns platform-wide aggregate statistics across all analyzed profiles including total followers, stars, top languages, highest developer score, and averages."
+      },
+      "response": []
+    },
+    {
+      "name": "🔍 Analyze Profile",
       "request": {
         "method": "POST",
         "header": [
@@ -19,37 +47,26 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n    \"username\": \"octocat\"\n}"
+          "raw": "{\n    \"username\": \"torvalds\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/api/profiles/analyze",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "profiles",
-            "analyze"
-          ]
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "profiles", "analyze"]
         },
-        "description": "Accepts a GitHub username, fetches profile data and repository details, calculates aggregated insights, saves the profile in MySQL, and returns the result."
+        "description": "Accepts a GitHub username, fetches profile data and all repositories from GitHub API, computes developer_score, profile_completeness, language distribution, top repos, and saves everything to MySQL."
       },
       "response": []
     },
     {
-      "name": "Get All Profiles",
+      "name": "📋 Get All Profiles",
       "request": {
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/profiles?page=1&limit=10&search=&sortBy=analysis_date&sortOrder=DESC",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "profiles"
-          ],
+          "raw": "{{baseUrl}}/api/profiles?page=1&limit=10&sortBy=developer_score&sortOrder=DESC",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "profiles"],
           "query": [
             {
               "key": "page",
@@ -64,7 +81,8 @@
             {
               "key": "search",
               "value": "",
-              "description": "Search by username or name"
+              "description": "Search by username or name",
+              "disabled": true
             },
             {
               "key": "minFollowers",
@@ -80,8 +98,8 @@
             },
             {
               "key": "sortBy",
-              "value": "analysis_date",
-              "description": "Sort by: followers, public_repos, total_stars_received, created_at, analysis_date"
+              "value": "developer_score",
+              "description": "Sort by: followers, public_repos, total_stars_received, developer_score, created_at, analysis_date"
             },
             {
               "key": "sortOrder",
@@ -90,68 +108,70 @@
             }
           ]
         },
-        "description": "Retrieves all analyzed profiles from the database with pagination, search, follower range filtering, and sorting capabilities."
+        "description": "Retrieves all analyzed profiles from the database with pagination, search, follower range filtering, and multi-field sorting."
       },
       "response": []
     },
     {
-      "name": "Get Single Profile",
+      "name": "🏆 Leaderboard",
       "request": {
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/profiles/octocat",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "profiles",
-            "octocat"
+          "raw": "{{baseUrl}}/api/profiles/leaderboard?limit=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "profiles", "leaderboard"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10",
+              "description": "Number of top developers to return (max 50)"
+            }
           ]
         },
-        "description": "Retrieves a single analyzed profile from the database by its GitHub username."
+        "description": "Returns top N developers ranked by composite developer_score. Score formula: followers×2 + stars×1.5 + forks×1 + repos×0.5"
       },
       "response": []
     },
     {
-      "name": "Reanalyze Profile",
+      "name": "👤 Get Single Profile",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/profiles/torvalds",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "profiles", "torvalds"]
+        },
+        "description": "Retrieves a single analyzed profile from the database by GitHub username. Includes full insights, language distribution, and top 5 repositories."
+      },
+      "response": []
+    },
+    {
+      "name": "🔄 Reanalyze Profile",
       "request": {
         "method": "PUT",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/profiles/octocat/reanalyze",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "profiles",
-            "octocat",
-            "reanalyze"
-          ]
+          "raw": "{{baseUrl}}/api/profiles/torvalds/reanalyze",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "profiles", "torvalds", "reanalyze"]
         },
-        "description": "Refetches the latest data for an existing user from the GitHub API and updates their record in the MySQL database."
+        "description": "Fetches fresh data from GitHub API and updates all profile insights, language distribution, and top repos in the database."
       },
       "response": []
     },
     {
-      "name": "Delete Profile",
+      "name": "🗑️ Delete Profile",
       "request": {
         "method": "DELETE",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/profiles/octocat",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "profiles",
-            "octocat"
-          ]
+          "raw": "{{baseUrl}}/api/profiles/torvalds",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "profiles", "torvalds"]
         },
-        "description": "Removes an analyzed profile's data from the local database."
+        "description": "Removes a profile and all its related data (languages, top repos) from the database via ON DELETE CASCADE."
       },
       "response": []
     }
@@ -161,18 +181,14 @@
       "listen": "prerequest",
       "script": {
         "type": "text/javascript",
-        "exec": [
-          ""
-        ]
+        "exec": [""]
       }
     },
     {
       "listen": "test",
       "script": {
         "type": "text/javascript",
-        "exec": [
-          ""
-        ]
+        "exec": [""]
       }
     }
   ],
@@ -180,7 +196,8 @@
     {
       "key": "baseUrl",
       "value": "http://localhost:3000",
-      "type": "string"
+      "type": "string",
+      "description": "Change this to your deployed URL when testing live API"
     }
   ]
 }
