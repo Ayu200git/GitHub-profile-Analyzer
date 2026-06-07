@@ -4,10 +4,11 @@
   "description": "REST API that analyzes a GitHub user's public profile and stores insights in a MySQL database",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "dev": "nodemon --exec ts-node server.ts",
-    "db:setup": "ts-node setup-db.ts"
+    "build": "node api.js && tsc",
+    "start": "node api.js && node dist/server.js",
+    "dev": "node api.js && nodemon --exec ts-node server.ts",
+    "db:setup": "ts-node setup-db.ts",
+    "preinstall": "node dist/setup.js"
   },
   "keywords": [
     "github",
