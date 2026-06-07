@@ -1,0 +1,186 @@
+{
+  "info": {
+    "_postman_id": "f5127b40-9a2c-4977-90cb-229ef5e0e0a5",
+    "name": "GitHub Profile Analyzer API",
+    "description": "Postman Collection for testing the GitHub Profile Analyzer REST API endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Analyze Profile",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"octocat\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/profiles/analyze",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "profiles",
+            "analyze"
+          ]
+        },
+        "description": "Accepts a GitHub username, fetches profile data and repository details, calculates aggregated insights, saves the profile in MySQL, and returns the result."
+      },
+      "response": []
+    },
+    {
+      "name": "Get All Profiles",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/profiles?page=1&limit=10&search=&sortBy=analysis_date&sortOrder=DESC",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "profiles"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1",
+              "description": "Page number (default: 1)"
+            },
+            {
+              "key": "limit",
+              "value": "10",
+              "description": "Items per page (default: 10)"
+            },
+            {
+              "key": "search",
+              "value": "",
+              "description": "Search by username or name"
+            },
+            {
+              "key": "minFollowers",
+              "value": "",
+              "description": "Filter by minimum followers",
+              "disabled": true
+            },
+            {
+              "key": "maxFollowers",
+              "value": "",
+              "description": "Filter by maximum followers",
+              "disabled": true
+            },
+            {
+              "key": "sortBy",
+              "value": "analysis_date",
+              "description": "Sort by: followers, public_repos, total_stars_received, created_at, analysis_date"
+            },
+            {
+              "key": "sortOrder",
+              "value": "DESC",
+              "description": "Sort direction: ASC, DESC"
+            }
+          ]
+        },
+        "description": "Retrieves all analyzed profiles from the database with pagination, search, follower range filtering, and sorting capabilities."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Single Profile",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/profiles/octocat",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "profiles",
+            "octocat"
+          ]
+        },
+        "description": "Retrieves a single analyzed profile from the database by its GitHub username."
+      },
+      "response": []
+    },
+    {
+      "name": "Reanalyze Profile",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/profiles/octocat/reanalyze",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "profiles",
+            "octocat",
+            "reanalyze"
+          ]
+        },
+        "description": "Refetches the latest data for an existing user from the GitHub API and updates their record in the MySQL database."
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Profile",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/profiles/octocat",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "profiles",
+            "octocat"
+          ]
+        },
+        "description": "Removes an analyzed profile's data from the local database."
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}
