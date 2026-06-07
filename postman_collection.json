@@ -7,7 +7,7 @@
   },
   "item": [
     {
-      "name": "🩺 Health Check",
+      "name": "Health Check",
       "request": {
         "method": "GET",
         "header": [],
@@ -21,7 +21,7 @@
       "response": []
     },
     {
-      "name": "📊 Platform Statistics",
+      "name": "Platform Statistics",
       "request": {
         "method": "GET",
         "header": [],
@@ -35,7 +35,7 @@
       "response": []
     },
     {
-      "name": "🔍 Analyze Profile",
+      "name": "Analyze Profile",
       "request": {
         "method": "POST",
         "header": [
@@ -59,7 +59,7 @@
       "response": []
     },
     {
-      "name": "📋 Get All Profiles",
+      "name": "Get All Profiles",
       "request": {
         "method": "GET",
         "header": [],
@@ -113,7 +113,7 @@
       "response": []
     },
     {
-      "name": "🏆 Leaderboard",
+      "name": "Leaderboard",
       "request": {
         "method": "GET",
         "header": [],
@@ -134,7 +134,7 @@
       "response": []
     },
     {
-      "name": "👤 Get Single Profile",
+      "name": "Get Single Profile",
       "request": {
         "method": "GET",
         "header": [],
@@ -162,7 +162,7 @@
       "response": []
     },
     {
-      "name": "🗑️ Delete Profile",
+      "name": "Delete Profile",
       "request": {
         "method": "DELETE",
         "header": [],
